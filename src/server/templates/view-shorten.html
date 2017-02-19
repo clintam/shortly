@@ -1,0 +1,9 @@
+<h1>Shortly -- a simple URL shortener</h1>
+
+{{if .TargetUrl}}
+<a href="{{.ShortUrl}}">{{.ShortUrl}}</a>
+is mapped to
+<a href="{{.TargetUrl}}">{{.TargetUrl}}</a>
+{{else}}
+Not found
+{{end}}
