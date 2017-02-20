@@ -12,7 +12,7 @@ func TestLinkShortenService_CreateAndExpandSlug(t *testing.T) {
 	// TODO assert on slug
 	expaneded := s.ExpandSlug(slug)
 	if expaneded != url {
-		t.Fatalf("expected %s to be %s", expaneded, url)
+		t.Errorf("expected %s to be %s", expaneded, url)
 	}
 }
 
@@ -23,6 +23,6 @@ func TestLinkShortenService_CreateTwoFromSameUrl(t *testing.T) {
 	slug1 := s.CreateSlug(url)
 	slug2 := s.CreateSlug(url)
 	if slug1 == slug2 {
-		t.Fatalf("expected different slugs %s and %s", slug1, slug2)
+		t.Errorf("expected different slugs %s and %s", slug1, slug2)
 	}
 }

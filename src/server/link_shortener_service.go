@@ -26,7 +26,7 @@ func (s *LinkShortenService) CreateSlug(url string) string {
 	slug := generateHash(seed)
 	for ; !s.storage.Store(slug, url); slug = generateHash(seed) {
 		seed++
-		log.Printf("Conflicting slug [%s], trying again", slug)
+		log.Printf("Conflicting slug [%s], trying again with seed [%d]", slug, seed)
 	}
 	log.Printf("Mapped slug [%s] to url [%s]", slug, url)
 	return slug

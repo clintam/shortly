@@ -115,7 +115,7 @@ func (t *TestRun) shorten(client ShortlyClient) {
 
 	atomic.AddUint64(&t.writeOps, 1)
 	t.slugToUrl[slug] = url
-	log.Printf("shortened %s to %s", url, slug)
+	log.Printf("%s shortened %s to %s", client.Name(), url, slug)
 }
 
 func (t *TestRun) expand(client ShortlyClient) {
@@ -145,6 +145,7 @@ func (t *TestRun) expand(client ShortlyClient) {
 		t.Fail(fmt.Sprintf("Expected [%s] to expand to [%s] but was [%s]", slug, url, expandedUrl))
 	}
 
+	log.Printf("%s expanded %s to %s", client.Name(), slug, url)
 	atomic.AddUint64(&t.readOps, 1)
 }
 

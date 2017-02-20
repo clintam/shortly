@@ -7,18 +7,17 @@ import (
 	"log"
 )
 
-
 type HttpServer struct {
-	service      LinkShortenService
-	listenPort   string
-	baseUrl string
-	shortenForm  *template.Template
+	service     LinkShortenService
+	listenPort  string
+	baseUrl     string
+	shortenForm *template.Template
 	viewShorten *template.Template
 }
 
-func createServer(storage string, port string, baseUrl string) HttpServer {
+func createServer(storage LinkStorage, port string, baseUrl string) HttpServer {
 	s := HttpServer{}
-	s.service = LinkShortenService{getStorage(storage)}
+	s.service = LinkShortenService{storage:storage}
 	s.listenPort = port
 	s.baseUrl = baseUrl
 	s.shortenForm = loadTemplate("shorten-form.html")
@@ -43,15 +42,6 @@ func loadTemplate(name string) *template.Template {
 		panic(fmt.Sprintln("Template ", name, " not found. ", err))
 	}
 	return t
-}
-
-func getStorage(name string) LinkStorage {
-	switch(name) {
-	case "memory":
-		return NewMemoryLinkStorage()
-	default:
-		panic("No such storage: " + name)
-	}
 }
 
 func (s *HttpServer) getExternalUrl(slug string) string {
