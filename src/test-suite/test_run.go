@@ -17,6 +17,8 @@ type TestRun struct {
 	ConcurrencyLevel int
 	WriteRate        float64
 	Iterations       int
+	InitialWrites    int
+	Verbose          bool
 
 	waiting   sync.WaitGroup
 	slugToUrl map[string]string
@@ -26,12 +28,28 @@ type TestRun struct {
 }
 
 // Start starts the test
+func (t *TestRun) WarmUp() {
+	log.Println("================")
+	log.Println(" Warming up (shortening urls)")
+	log.Println("================")
+	log.Printf("expected server url [%s]", t.ServerUrl)
+	log.Printf("initial writes      [%d]", t.InitialWrites)
+
+	client := makeClient("warmup client", t)
+	for i := 0; i < t.InitialWrites; i++ {
+		t.shorten(client)
+	}
+	t.writeOps = 0
+}
+
+// Start starts the test
 func (t *TestRun) Start() {
 	log.Println("================")
 	log.Println(" Starting test ")
 	log.Println("================")
-	log.Printf("expected server url [%s]", t.ServerUrl)
-	log.Printf("concurrency level   [%d]", t.ConcurrencyLevel)
+	log.Printf("concurrency level [%d]", t.ConcurrencyLevel)
+	log.Printf("iterations        [%d]", t.Iterations)
+	log.Printf("writeRate         [%f]", t.WriteRate)
 	t.StartedAt = time.Now()
 	log.Println("TESTRUN Starting...")
 }
@@ -115,7 +133,10 @@ func (t *TestRun) shorten(client ShortlyClient) {
 
 	atomic.AddUint64(&t.writeOps, 1)
 	t.slugToUrl[slug] = url
-	log.Printf("%s shortened %s to %s", client.Name(), url, slug)
+
+	if t.Verbose {
+		log.Printf("%s shortened %s to %s", client.Name(), url, slug)
+	}
 }
 
 func (t *TestRun) expand(client ShortlyClient) {
@@ -144,18 +165,22 @@ func (t *TestRun) expand(client ShortlyClient) {
 	if expandedUrl != url {
 		t.Fail(fmt.Sprintf("Expected [%s] to expand to [%s] but was [%s]", slug, url, expandedUrl))
 	}
-
-	log.Printf("%s expanded %s to %s", client.Name(), slug, url)
 	atomic.AddUint64(&t.readOps, 1)
+
+	if t.Verbose {
+		log.Printf("%s expanded %s to %s", client.Name(), slug, url)
+	}
 }
 
 //MakeTestRun returns a new instance of a test run.
-func MakeTestRun(serverUrl string, concurrencyLevel int, writeRate float64, iterations int) *TestRun {
+func MakeTestRun(serverUrl string, concurrencyLevel int, writeRate float64, iterations int, verbose bool, initialWrites int) *TestRun {
 	return &TestRun{
 		ServerUrl:        serverUrl,
 		ConcurrencyLevel: concurrencyLevel,
 		WriteRate:        writeRate,
 		Iterations:       iterations,
+		InitialWrites:    initialWrites,
+		Verbose:          verbose,
 		slugToUrl:        make(map[string]string),
 	}
 }

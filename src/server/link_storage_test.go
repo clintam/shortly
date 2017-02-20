@@ -4,10 +4,7 @@ import (
 "testing"
 )
 
-func TestLRedisLinkStorage_CreateAndExpandSlug(t *testing.T) {
-	s := NewRedisLinkStorage("redis:6379")
-	s.ClearAll()
-
+func testLinkStorage(t *testing.T, s LinkStorage) {
 	url := "http://example.com"
 	slug := s.GetUrl(url)
 	if slug != "" {
@@ -29,4 +26,21 @@ func TestLRedisLinkStorage_CreateAndExpandSlug(t *testing.T) {
 		t.Errorf("Exptected not to store")
 	}
 
+}
+
+func TestMemoryLinkStorage(t *testing.T) {
+	s := NewMemoryLinkStorage()
+	testLinkStorage(t, s)
+}
+
+func TestRedisLinkStorage(t *testing.T) {
+	s := NewRedisLinkStorage("redis:6379")
+	s.ClearAll()
+	testLinkStorage(t, s)
+}
+
+func TestMongoLinkStorage(t *testing.T) {
+	s := NewMongoLinkStorage("mongo")
+	s.ClearAll()
+	testLinkStorage(t, s)
 }

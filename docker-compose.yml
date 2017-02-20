@@ -3,14 +3,24 @@ services:
   server:
     image: clintam/shortly
     build: .
-    command: server
+    command: "server --storage ${STORAGE}"
     ports:
     - 8080:8080
+  tester:
+      image: clintam/shortly
+      command: echo defered # test-suite --server http://server:8080
   redis:
     image: redis:3.0.7
     ports:
      - 6379:6379
     volumes:
-    - db:/data
+    - redis:/data
+  mongo:
+    image: mongo:3.3.10
+    ports:
+     - 27017:27017
+    volumes:
+    - mongo:/data/db
 volumes:
-  db:
+  redis:
+  mongo:
