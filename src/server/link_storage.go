@@ -1,5 +1,7 @@
 package main
 
+import "sync"
+
 type LinkStorage interface {
 	// Store attempts to store a new slug mapped to the url.
 	// If the slug already exists, it should return false and not store anything.
@@ -9,6 +11,7 @@ type LinkStorage interface {
 
 type MemoryLinkStorage struct {
 	slugToUrl map[string]string
+	mutex sync.RWMutex
 }
 
 func NewMemoryLinkStorage() *MemoryLinkStorage {
@@ -18,6 +21,9 @@ func NewMemoryLinkStorage() *MemoryLinkStorage {
 }
 
 func (s *MemoryLinkStorage) Store(slug string, url string) bool {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	if _, ok := s.slugToUrl[slug]; ok {
 		return false
 	}
@@ -26,5 +32,8 @@ func (s *MemoryLinkStorage) Store(slug string, url string) bool {
 }
 
 func (s *MemoryLinkStorage) GetUrl(slug string) string {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
 	return s.slugToUrl[slug]
 }
