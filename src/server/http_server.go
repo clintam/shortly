@@ -30,6 +30,7 @@ func createServer(storage LinkStorage, port string, baseUrl string) HttpServer {
 }
 
 func (s *HttpServer) Start() {
+	fmt.Printf("Listening on %s", s.listenPort)
 	err := http.ListenAndServe(":"+s.listenPort, nil)
 	if err != nil {
 		fmt.Println("Could not start server", err)
@@ -53,7 +54,13 @@ func (s *HttpServer) shortenPageHandler(w http.ResponseWriter, r *http.Request) 
 		s.shortenForm.Execute(w, struct{}{})
 	} else if r.Method == "POST" {
 		url := r.FormValue("url")
-		slug := s.service.CreateSlug(url)
+		custom := r.FormValue("custom")
+
+		slug, err := s.service.CreateSlug(url, custom)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), 500)
+			return
+		}
 		http.Redirect(w, r, "/status/"+slug, http.StatusFound)
 	}
 }

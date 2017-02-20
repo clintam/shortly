@@ -9,7 +9,7 @@ import (
 func main() {
 	port := flag.String("port", "8080", "Port to listen on")
 	externalBaseUrl := flag.String("external-url", "http://localhost:8080", "Externally exposed url")
-	storage := flag.String("storage", "redis", "Persistent storage. Valid values are redis,mongo,memory")
+	storage := flag.String("storage", "memory", "Persistent storage. Valid values are redis,mongo,memory")
 	redisAddr := flag.String("redis", "redis:6379", "Redis address <host>:<port>")
 	mongoAddr := flag.String("mongo", "mongo", "Mongo comma seperated hosts addresses")
 	log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds)

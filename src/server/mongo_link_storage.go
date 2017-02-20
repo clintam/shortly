@@ -37,6 +37,7 @@ func (s *MongoLinkStorage) ensureIndexes() {
 		Key: []string{"slug"},
 		Unique: true,
 		Sparse: true,
+		Background: false,
 	}
 	err := s.redirects.EnsureIndex(index)
 	if err != nil {

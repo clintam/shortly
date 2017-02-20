@@ -1,14 +1,12 @@
 Shortly : a simple url shortening service designed to scale out
 
-TODO: User can claim custom slug
-
 # Design
 
 ### Use cases
 User can provide a url and the service will return a unique
 shorter url which, when visited, will redirect (302) to the provided url. 
 
-TODO user may optional provide a custom "slug" which is the unique bit of the Url.
+User may optional provide a custom "slug" which is the unique bit of the Url.
 
 ### High level design
 
