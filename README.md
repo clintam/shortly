@@ -1,20 +1,19 @@
 Shortly : a simple url shortening service designed to scale out
 
-# Design
-
 ### Use cases
 User can provide a url and the service will return a unique
 shorter url which, when visited, will redirect (302) to the provided url. 
 
 User may optional provide a custom "slug" which is the unique bit of the Url.
 
-### High level design
+# Design
 
 * Exposed as an http service with form/post and a simple web ui.
-** form to provide url and get the "redirecting" url
-** http GET handler on the redirecting url to  
+  * form to provide url (and optional custom slug).
+  * Submitting stores the association and redirects to a status page which shows the 
+  "redirecting" url (so user can copy)
+  * http GET handler on the /slug path to perform the redirection (will go to status notfound page if needed)  
 * The urls that are returned will be of the form `http://${host}/{$slug}.`
-* 
 
 
 ### Calculating unique slugs
