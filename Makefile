@@ -1,6 +1,6 @@
 .PHONY: all test test-suite
 
-PERF_TEST=docker-compose run tester test-suite --server http://server:8080 --concurrency 100 --iterations 1000 --initial-writes 100000
+PERF_TEST=docker-compose run tester test-suite --server http://server:8080 --concurrency 100 --iterations 100 --initial-writes 100000
 
 IMAGE = clintam/shortly
 
@@ -41,7 +41,7 @@ mongo-perftest: build mongo
 	$(PERF_TEST)
 	@echo === Mongo
 
-perftest-suite: memory-perftest redis-perftest mongo-perftest
+perftest: memory-perftest redis-perftest mongo-perftest
 
 clean:
 	docker-compose down -v

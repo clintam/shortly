@@ -20,6 +20,7 @@ type TestRun struct {
 	InitialWrites    int
 	Verbose          bool
 
+	client    ShortlyClient
 	waiting   sync.WaitGroup
 	slugToUrl map[string]string
 	mutex     sync.RWMutex
@@ -35,9 +36,8 @@ func (t *TestRun) WarmUp() {
 	log.Printf("expected server url [%s]", t.ServerUrl)
 	log.Printf("initial writes      [%d]", t.InitialWrites)
 
-	client := makeClient("warmup client", t)
 	for i := 0; i < t.InitialWrites; i++ {
-		t.shorten(client)
+		t.shorten()
 	}
 	t.writeOps = 0
 }
@@ -99,7 +99,7 @@ func (t *TestRun) Run() {
 	log.Printf("Spawning %d clients", t.ConcurrencyLevel)
 	t.waiting.Add(t.ConcurrencyLevel)
 	for i := 0; i < t.ConcurrencyLevel; i++ {
-		go t.startClient(i)
+		go t.startWorker(i)
 	}
 	t.waiting.Wait()
 
@@ -107,23 +107,22 @@ func (t *TestRun) Run() {
 	log.Printf("TESTRUN - FINISHED (took %dms %v)", durationInMillis(duration), duration)
 }
 
-func (t *TestRun) startClient(num int) {
-	client := makeClient(fmt.Sprintf("client %d", num), t)
+func (t *TestRun) startWorker(num int) {
 	for i := 0; i < t.Iterations; i++ {
 		randFloat := float64(rand.Intn(100)) / 100.0
 		if randFloat <= t.WriteRate {
-			t.shorten(client)
+			t.shorten()
 		} else {
-			t.expand(client)
+			t.expand()
 		}
 	}
 	t.waiting.Done()
 
 }
 
-func (t *TestRun) shorten(client ShortlyClient) {
+func (t *TestRun) shorten() {
 	url := randomUrl()
-	slug, err := client.Shorten(url)
+	slug, err := t.client.Shorten(url)
 	if err != nil {
 		t.Fail(fmt.Sprintf("Error while shortening [%s]", url, err))
 	}
@@ -135,11 +134,11 @@ func (t *TestRun) shorten(client ShortlyClient) {
 	t.slugToUrl[slug] = url
 
 	if t.Verbose {
-		log.Printf("%s shortened %s to %s", client.Name(), url, slug)
+		log.Printf("shortened %s to %s", url, slug)
 	}
 }
 
-func (t *TestRun) expand(client ShortlyClient) {
+func (t *TestRun) expand() {
 	shortenedCount := len(t.slugToUrl)
 	if shortenedCount == 0 {
 		return // FIXME?
@@ -158,7 +157,7 @@ func (t *TestRun) expand(client ShortlyClient) {
 		i--
 	}
 
-	expandedUrl, err := client.Expand(slug)
+	expandedUrl, err := t.client.Expand(slug)
 	if err != nil {
 		t.Fail(fmt.Sprintf("Error while expanding [%s]", slug, err))
 	}
@@ -168,7 +167,7 @@ func (t *TestRun) expand(client ShortlyClient) {
 	atomic.AddUint64(&t.readOps, 1)
 
 	if t.Verbose {
-		log.Printf("%s expanded %s to %s", client.Name(), slug, url)
+		log.Printf("expanded %s to %s", slug, url)
 	}
 }
 
@@ -182,17 +181,13 @@ func MakeTestRun(serverUrl string, concurrencyLevel int, writeRate float64, iter
 		InitialWrites:    initialWrites,
 		Verbose:          verbose,
 		slugToUrl:        make(map[string]string),
+		client:           MakeShortlyClient(serverUrl),
+
 	}
 }
 
 func randomUrl() string {
 	return fmt.Sprintf("http://example.com/%d", rand.Int63())
-}
-
-func makeClient(clientName string, t *TestRun) ShortlyClient {
-	client := MakeShortlyClient(clientName, t.ServerUrl)
-
-	return client
 }
 
 func durationInMillis(d time.Duration) int64 {

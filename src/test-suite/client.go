@@ -4,37 +4,34 @@ import (
 	"net/http"
 	"net/url"
 	"fmt"
+	"io"
+	"io/ioutil"
 )
 
 //ShortlyClient
 type ShortlyClient interface {
-	Name() string
 	Shorten(url string) (string, error)
 	Expand(url string) (string, error)
 }
 
 // HttpShortlyClient connects to the running server over http
 type HttpShortlyClient struct {
-	name    string
 	baseUrl string
 	http    *http.Client
 }
 
-func MakeShortlyClient(name string, baseUrl string) ShortlyClient {
+func MakeShortlyClient(baseUrl string) ShortlyClient {
 	client := HttpShortlyClient{}
-	client.name = name
 	client.baseUrl = baseUrl
+	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 500
+	http.DefaultTransport.(*http.Transport).MaxIdleConns = 500
 	client.http = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
+		Transport: http.DefaultTransport,
 	}
 	return &client
-}
-
-//Name return this client's name.
-func (client *HttpShortlyClient) Name() string {
-	return client.name
 }
 
 func (client *HttpShortlyClient) Shorten(urlString string) (string, error) {
@@ -42,7 +39,7 @@ func (client *HttpShortlyClient) Shorten(urlString string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer close(resp)
 	if resp.StatusCode != 302 {
 		return "", fmt.Errorf("Expected 302, got %d", resp.StatusCode)
 	}
@@ -56,10 +53,16 @@ func (client *HttpShortlyClient) Expand(slug string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer close(resp)
 	if resp.StatusCode != 302 {
 		return "", fmt.Errorf("Expected 302, got %d", resp.StatusCode)
 	}
 	location := resp.Header.Get("Location")
 	return location, nil
 }
+
+func close(res *http.Response) {
+	io.Copy(ioutil.Discard, res.Body)
+	res.Body.Close()
+}
+
